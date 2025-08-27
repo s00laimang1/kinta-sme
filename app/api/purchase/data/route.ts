@@ -96,13 +96,11 @@ export async function POST(request: Request) {
     // Find data plan
     const dataPlan = await DataPlan.findById(_id);
 
-    console.log(dataPlan);
-
     if (!dataPlan) {
       throw new Error("PLAN_NOT_FOUND: we cannot find this plan");
     }
 
-    if (dataPlan.isDisabled) {
+    if (dataPlan.isDisabled || dataPlan.removedFromList) {
       throw new Error(
         "PLAN_DISABLED: this plan is disabled and cannot be purchased at the moment"
       );
@@ -180,7 +178,7 @@ export async function POST(request: Request) {
         const networdId: Record<IBuyVtuNetworks, string> = {
           Mtn: "1",
           Airtel: "airtel-data",
-          Glo: "glo-data",
+          Glo: dataPlan.type === "SME" ? "glo-sme-data" : "glo-data",
           "9Mobile": "etisalat-data",
         };
 
