@@ -259,7 +259,7 @@ export function CreateDataPlanDialog({
                         <Input
                           {...field}
                           className="rounded-none"
-                          type="number"
+                          type="text"
                           placeholder="Enter unique plan ID"
                         />
                       </FormControl>
