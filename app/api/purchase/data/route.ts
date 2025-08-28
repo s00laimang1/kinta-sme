@@ -158,7 +158,7 @@ export async function POST(request: Request) {
     let vendingMessage = "";
 
     try {
-      if (dataPlan.network === "Mtn" || dataPlan.provider === "smePlug") {
+      if (dataPlan.network === "Mtn") {
         // Use abanty data sme
         const n: Record<string, any> = {
           mtn: "1",
