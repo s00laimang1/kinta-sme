@@ -1003,7 +1003,11 @@ export class BuyVTU {
       const res = await axios.post<IRes>(
         `https://smeplug.ng/api/v1/data/purchase`,
         payload,
-        { headers: { Authorization: `Bearer ${process.env.SME_PLUG_API_KEY}` } }
+        {
+          headers: {
+            Authorization: `Bearer 34a79f30767afa70514e239c5b990e68a16ba073db6a03ec2d8d6245075236df`,
+          },
+        }
       );
 
       console.log(res.data);
