@@ -69,11 +69,18 @@ export default function SettingsPage() {
   ];
 
   const disableAndEnableDataPlans = [
-    "mtn-gitfing",
+    "mtn-gifting",
     "mtn-sme",
     "mtn-cheap",
     "glo-sme",
     "glo-cheap",
+    "glo-gifting",
+    "airtel-sme",
+    "airtel-cheap",
+    "airtel-gifting",
+    "9mobile-sme",
+    "9mobile-gifting",
+    "9mobile-cheap",
   ];
 
   // Available banks for select

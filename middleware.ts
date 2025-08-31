@@ -14,7 +14,6 @@ const PUBLIC_ROUTES = [
   "/auth/reset-password",
   "/api/auth/reset-password",
   "/sitemap.xml",
-  "/",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -85,7 +84,7 @@ export async function middleware(request: NextRequest) {
     // Verify the user has admin role
     const userRole = token?.role;
 
-    if (userRole !== "admin") {
+    if (!pathname.startsWith("/api/admin/settings") && userRole !== "admin") {
       return new NextResponse(
         JSON.stringify({ error: "Forbidden: Admin access required" }),
         {
