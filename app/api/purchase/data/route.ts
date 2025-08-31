@@ -112,6 +112,22 @@ export async function POST(request: Request) {
     // Get the entire application configuration
     const app = await App.findOne({}).select("+buyVtu").session(buyVtu.session);
 
+    const disablePlan = app?.disabledPlans.find((plan) => {
+      const [ntwk = "", planType = ""] = plan.split("-");
+
+      return (
+        ntwk.toLowerCase() === dataPlan.network.toLowerCase() &&
+        planType.toLowerCase() === dataPlan.type.toLowerCase()
+      );
+    });
+
+    if (!!disablePlan) {
+      return NextResponse.json(
+        httpStatusResponse(400, "Plan has been disabled"),
+        { status: 400 }
+      );
+    }
+
     await app?.systemIsunderMaintainance();
     await app?.isTransactionEnable("data");
 
@@ -158,7 +174,7 @@ export async function POST(request: Request) {
     let vendingMessage = "";
 
     try {
-      if (dataPlan.network === "Mtn") {
+      if (dataPlan.network.toLowerCase() === "mtn") {
         // Use abanty data sme
         const n: Record<string, any> = {
           mtn: "1",

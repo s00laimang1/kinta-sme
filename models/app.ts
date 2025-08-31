@@ -95,6 +95,10 @@ const AppSchema: mongoose.Schema<appProps> = new mongoose.Schema({
     type: BuyVtuSchema,
     select: false,
   },
+  disabledPlans: {
+    type: [String],
+    default: [],
+  },
 });
 
 AppSchema.methods.isTransactionEnable = async function (
@@ -191,6 +195,22 @@ AppSchema.methods.refreshAccessToken = async function () {
   }
 
   return buyVtu?.accessToken;
+};
+
+AppSchema.methods.addOrRemoveDisablePlans = async function (plan: string) {
+  const [network, planType] = plan.split("-");
+
+  if (this.disabledPlans.includes(plan)) {
+    this.disabledPlans = this.disabledPlans.filter((p: string) => p !== plan);
+  } else {
+    this.disabledPlans.push(plan);
+  }
+
+  await App.findByIdAndUpdate(this._id, {
+    $set: {
+      disabledPlans: this.disabledPlans,
+    },
+  });
 };
 
 const App: mongoose.Model<appProps> =

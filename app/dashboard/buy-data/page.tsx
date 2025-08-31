@@ -7,16 +7,9 @@ import DataPlanCard from "@/components/data-plan-card";
 import PhoneNumberBadge from "@/components/phone-number-badge";
 import BalanceCard from "@/components/balance-card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useNavBar } from "@/hooks/use-nav-bar";
 import { AVIALABLE_NETWORKS, PLAN_TYPES } from "@/lib/constants";
-import type { availableNetworks, dataPlan } from "@/types";
+import type { appProps, availableNetworks, dataPlan } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { api, getRecentlyUsedContacts } from "@/lib/utils";
 import { useMediaQuery } from "@uidotdev/usehooks";
@@ -36,11 +29,9 @@ const Page = () => {
   useNavBar("Buy Data");
   useHealthChecker("data");
   const [network, setNetwork] = useState<availableNetworks | null>(null);
-  const [isNetworkSelected, setIsNetworkSelected] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [planType, setPlanType] = useState("");
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [open, setOpen] = useState(false);
 
   const { isLoading, data } = useQuery({
     queryKey: ["data-plans"],
@@ -52,6 +43,15 @@ const Page = () => {
     queryKey: ["recently-used"],
     queryFn: () => getRecentlyUsedContacts("data", 3),
   });
+
+  const { data: appSettingsData } = useQuery<{ data: { data: appProps } }>({
+    queryKey: ["app-settings"],
+    queryFn: () => api.get("/admin/settings"),
+  });
+
+  const appSettings = appSettingsData?.data?.data;
+
+  const disablePlans = appSettings?.disabledPlans;
 
   const { data: _data } = data || {};
   const { data: dataPlans = [] } = _data || {};
@@ -131,7 +131,7 @@ const Page = () => {
           </h2>
 
           {/* Network Selection */}
-          <div className="flex flex-wrap gap-3 mb-6">
+          <div className="flex flex-col gap-3 mb-6">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
               <span className="text-sm font-medium">Choose Plan:</span>
@@ -139,7 +139,10 @@ const Page = () => {
 
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" className="h-[3rem] capitalize">
+                <Button
+                  variant="outline"
+                  className="h-[3rem] w-full rounded-none capitalize"
+                >
                   {network || "  Select Network"}
                 </Button>
               </DialogTrigger>
@@ -167,7 +170,10 @@ const Page = () => {
 
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" className="h-[3rem]">
+                <Button
+                  variant="outline"
+                  className="h-[3rem] w-full rounded-none"
+                >
                   {planType || "Select Plan Type"}
                 </Button>
               </DialogTrigger>
@@ -176,19 +182,35 @@ const Page = () => {
                   <DialogTitle>Select Plan Type</DialogTitle>
                 </DialogHeader>
                 <div className="flex flex-col gap-3 w-full">
-                  {PLAN_TYPES.map((plantype, idx) => (
-                    <DialogClose asChild key={idx}>
-                      <Button
-                        variant="outline"
-                        className="rounded-none w-full h-[3rem]"
-                        onClick={() => {
-                          setPlanType(plantype);
-                        }}
-                      >
-                        {plantype.toUpperCase()}
-                      </Button>
-                    </DialogClose>
-                  ))}
+                  {PLAN_TYPES.map((plantype, idx) => {
+                    const c = disablePlans?.find((p) => {
+                      const [n, t] = p.split("-");
+
+                      return (
+                        n.toLowerCase() === network?.toLowerCase() &&
+                        t.toLowerCase() === plantype.toLowerCase()
+                      );
+                    });
+
+                    const cdp = c?.split("-");
+
+                    return (
+                      <DialogClose asChild key={idx}>
+                        <Button
+                          variant="outline"
+                          disabled={
+                            cdp?.[1].toLowerCase() === plantype.toLowerCase()
+                          }
+                          className="rounded-none w-full h-[3rem]"
+                          onClick={() => {
+                            setPlanType(plantype);
+                          }}
+                        >
+                          {plantype.toUpperCase()}
+                        </Button>
+                      </DialogClose>
+                    );
+                  })}
                 </div>
               </DialogContent>
             </Dialog>

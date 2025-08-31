@@ -315,6 +315,8 @@ export interface appProps extends Document {
     url: string;
   };
 
+  disabledPlans: string[];
+
   // Methods
   isTransactionEnable: (transactionType?: transactionType) => Promise<void>;
   checkTransactionLimit: (amount: number) => Promise<void>;

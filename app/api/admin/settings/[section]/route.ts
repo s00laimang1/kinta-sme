@@ -96,6 +96,7 @@ export async function PATCH(
         "maintenanceMessage",
         "apiRateLimit",
         "logLevel",
+        "disabledPlans",
       ],
       security: [
         "force2FA",
@@ -131,6 +132,8 @@ export async function PATCH(
       acc[key] = settings[key as keyof typeof settings];
       return acc;
     }, {} as Record<string, any>);
+
+    console.log({ updatedSectionSettings, body });
 
     return NextResponse.json(updatedSectionSettings, { status: 200 });
   } catch (error) {

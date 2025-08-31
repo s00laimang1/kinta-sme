@@ -68,6 +68,14 @@ export default function SettingsPage() {
     "recharge-card",
   ];
 
+  const disableAndEnableDataPlans = [
+    "mtn-gitfing",
+    "mtn-sme",
+    "mtn-cheap",
+    "glo-sme",
+    "glo-cheap",
+  ];
+
   // Available banks for select
   const availableBankOptions: availableBanks[] = [
     "9PSB",
@@ -126,6 +134,20 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDiableAndEnableDataChange = (type: string, checked: boolean) => {
+    if (checked) {
+      setSettings({
+        ...settings,
+        disabledPlans: [...settings?.disabledPlans, type],
+      });
+    } else {
+      setSettings({
+        ...settings,
+        disabledPlans: settings?.disabledPlans?.filter((t) => t !== type),
+      });
+    }
+  };
+
   // Save settings for the current tab
   const saveSettings = async (section: string) => {
     setLoading(true);
@@ -148,6 +170,7 @@ export default function SettingsPage() {
           "systemMessage",
           "apiRateLimit",
           "logLevel",
+          "disabledPlans",
         ],
         security: [
           "force2FA",
@@ -499,6 +522,38 @@ export default function SettingsPage() {
                   placeholder="Write a message to your users."
                   className="rounded-none  max-w-[40rem]"
                 />
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-base font-medium">
+                  Disable And Enable Data
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Select the data types you want to disable.
+                </p>
+                <div className="grid gap-2 pt-2">
+                  {disableAndEnableDataPlans.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`data-${type}`}
+                        checked={settings?.disabledPlans?.includes(type)}
+                        onCheckedChange={(checked) =>
+                          handleDiableAndEnableDataChange(
+                            type,
+                            checked as boolean
+                          )
+                        }
+                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary rounded-none"
+                      />
+                      <label
+                        htmlFor={`transaction-${type}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-3">
