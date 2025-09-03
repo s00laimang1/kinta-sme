@@ -174,7 +174,10 @@ export async function POST(request: Request) {
     let vendingMessage = "";
 
     try {
-      if (dataPlan.network.toLowerCase() === "mtn") {
+      if (
+        dataPlan.network.toLowerCase() === "mtn" ||
+        dataPlan.network.toLowerCase() === "airtel"
+      ) {
         // Use abanty data sme
         const n: Record<string, any> = {
           mtn: "1",
