@@ -178,25 +178,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Optimize scrollbars for mobile */
-@media (min-width: 768px) {
-  ::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-/* Show minimal scrollbar on mobile for better UX */
-@media (max-width: 767px) {
-  ::-webkit-scrollbar {
-    width: 2px;
-    height: 2px;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-  }
-}
-
 /*Add content-visibility for better rendering performance
 .content-block,
 .use-content-visibility {

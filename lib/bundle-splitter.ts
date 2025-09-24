@@ -53,35 +53,35 @@ export function loadScript(src: string, async = true, defer = true): Promise<voi
   });
 }
 
-/**
- * Loads a stylesheet dynamically
- * @param href - The href URL of the stylesheet
- * @returns A Promise that resolves when the stylesheet is loaded
- */
-export function loadStylesheet(href: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined') {
-      resolve();
-      return;
-    }
-
-    // Check if stylesheet is already loaded
-    const existingLink = document.querySelector(`link[href="${href}"]`);
-    if (existingLink) {
-      resolve();
-      return;
-    }
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = href;
-
-    link.onload = () => resolve();
-    link.onerror = (error) => reject(error);
-
-    document.head.appendChild(link);
-  });
-}
+///**
+// * Loads a stylesheet dynamically
+// * @param href - The href URL of the stylesheet
+// * @returns A Promise that resolves when the stylesheet is loaded
+// */
+//export function loadStylesheet(href: string): Promise<void> {
+//  return new Promise((resolve, reject) => {
+//    if (typeof window === 'undefined') {
+//      resolve();
+//      return;
+//    }
+//
+//    // Check if stylesheet is already loaded
+//    const existingLink = document.querySelector(`link[href="${href}"]`);
+//    if (existingLink) {
+//      resolve();
+//      return;
+//    }
+//
+//    const link = document.createElement('link');
+//    link.rel = 'stylesheet';
+//    link.href = href;
+//
+//    link.onload = () => resolve();
+//    link.onerror = (error) => reject(error);
+//
+//    document.head.appendChild(link);
+//  });
+//}
 
 /**
  * Detects if the current device is low-end based on memory and CPU
