@@ -44,13 +44,10 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { Referral } from "@/models/referral";
 
 export const budPay = (type: "s2s" | "v2" = "v2") => {
-  console.log(type)
   return axios.create({
     baseURL: `https://api.budpay.com/api/${type}`,
   });
 };
-
-
 
 export const vtuPassApi = axios.create({
   baseURL: `https://vtpass.com/api`,
