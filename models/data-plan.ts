@@ -45,6 +45,10 @@ const DataPlanSchema: mongoose.Schema<dataPlan> = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  dataAmount: {
+    type: Number,
+    required: false,
+  },
 });
 
 const DataPlan: mongoose.Model<dataPlan> =

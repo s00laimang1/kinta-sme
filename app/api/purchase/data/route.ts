@@ -163,6 +163,7 @@ export async function POST(request: Request) {
       idempotencyKey: idempotencyKey,
       transactionRef: transactionRef,
       phoneNumber,
+      dataId: dataPlan._id,
     });
 
     // Commit the balance deduction and pending transaction

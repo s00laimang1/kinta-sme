@@ -20,8 +20,21 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function DashboardPage() {
+  const [dataSoldNetwork, setDataSoldNetwork] = useState<string>("");
+  const [dataSoldTimeframe, setDataSoldTimeframe] = useState<
+    "today" | "yesterday" | "last-week" | "all"
+  >("today");
+
   const { isLoading, data } = useQuery({
     queryKey: ["dashboard"],
     queryFn: async () =>
@@ -36,6 +49,36 @@ export default function DashboardPage() {
   });
 
   const { data: overviewData } = data || {};
+
+  type DataSoldItem = {
+    network: string;
+    type: string;
+    dataAmountSold: number;
+    amount: number;
+  };
+
+  const {
+    isLoading: isLoadingDataSold,
+    data: dataSoldResp,
+    refetch: refetchDataSold,
+  } = useQuery({
+    queryKey: [
+      "admin-data-sold",
+      { network: dataSoldNetwork, timeframe: dataSoldTimeframe },
+    ],
+    queryFn: async () => {
+      const params = new URLSearchParams({ timeframe: dataSoldTimeframe });
+      if (dataSoldNetwork) params.set("network", dataSoldNetwork);
+      return await api.get<{ data: { items: DataSoldItem[] } }>(
+        `/admin/overview/data-sold/?${params.toString()}`
+      );
+    },
+  });
+
+  const dataSold = useMemo(
+    () => dataSoldResp?.data?.data?.items || [],
+    [dataSoldResp]
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -56,6 +99,9 @@ export default function DashboardPage() {
           </TabsTrigger>
           <TabsTrigger value="reports" className="rounded-none">
             Reports
+          </TabsTrigger>
+          <TabsTrigger value="data-sold" className="rounded-none">
+            Data Sold
           </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
@@ -182,6 +228,97 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        <TabsContent value="data-sold" className="space-y-4">
+          <Card className="rounded-none">
+            <CardHeader className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <CardTitle>Data Sold</CardTitle>
+                <CardDescription>
+                  Aggregated data volume and amount by network and type.
+                </CardDescription>
+              </div>
+              <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground">
+                    Network
+                  </label>
+                  <Select
+                    value={dataSoldNetwork}
+                    onValueChange={(val) => setDataSoldNetwork(val)}
+                  >
+                    <SelectTrigger className="w-44">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All</SelectItem>
+                      <SelectItem value="Mtn">Mtn</SelectItem>
+                      <SelectItem value="Airtel">Airtel</SelectItem>
+                      <SelectItem value="Glo">Glo</SelectItem>
+                      <SelectItem value="9Mobile">9Mobile</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground">
+                    Timeframe
+                  </label>
+                  <Select
+                    value={dataSoldTimeframe}
+                    onValueChange={(val) =>
+                      setDataSoldTimeframe(val as typeof dataSoldTimeframe)
+                    }
+                  >
+                    <SelectTrigger className="w-44">
+                      <SelectValue placeholder="Today" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="yesterday">Yesterday</SelectItem>
+                      <SelectItem value="last-week">Last Week</SelectItem>
+                      <SelectItem value="all">All Time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingDataSold ? (
+                <div className="grid gap-2">
+                  {Array(5)
+                    .fill(0)
+                    .map((_, i) => (
+                      <Skeleton key={i} className="h-8 w-full" />
+                    ))}
+                </div>
+              ) : dataSold.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No data found</p>
+              ) : (
+                <div className="overflow-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-muted-foreground">
+                        <th className="py-2 pr-4">Network</th>
+                        <th className="py-2 pr-4">Type</th>
+                        <th className="py-2 pr-4">Data Amount Sold</th>
+                        <th className="py-2 pr-4">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dataSold.map((item, idx) => (
+                        <tr key={idx} className="border-t">
+                          <td className="py-2 pr-4">{item.network}</td>
+                          <td className="py-2 pr-4">{item.type}</td>
+                          <td className="py-2 pr-4">{item.dataAmountSold}</td>
+                          <td className="py-2 pr-4">{item.amount}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="analytics" className="space-y-4">
           <Card className="rounded-none">

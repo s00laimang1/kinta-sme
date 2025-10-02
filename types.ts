@@ -71,6 +71,7 @@ export interface dataPlan {
   provider: "buyVTU" | "smePlug";
   isDisabled?: boolean;
   removedFromList?: boolean;
+  dataAmount?: number;
 }
 
 export interface FeatureCardProps {
@@ -228,7 +229,9 @@ export interface transaction<T = any> {
   type: transactionType;
   paymentMethod: paymentMethod;
   accountId?: string;
-  meta?: T;
+  meta?: T & {
+    dataId?: string;
+  };
   _id?: string;
 }
 

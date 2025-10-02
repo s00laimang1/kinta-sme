@@ -1200,6 +1200,8 @@ export class BuyVTU {
       const meta = {
         ...options,
         status: "pending", // Mark as pending initially
+        // Add dataId for data transactions
+        ...(type === "data" && options?.dataId && { dataId: options.dataId }),
       };
 
       const trxPayload: transaction = {
@@ -1285,6 +1287,8 @@ export class BuyVTU {
         ...this.powerVendResponse,
         ...options,
         status: this.status ? "success" : "failed",
+        // Add dataId for data transactions
+        ...(type === "data" && options?.dataId && { dataId: options.dataId }),
       };
 
       const trxPayload: transaction = {

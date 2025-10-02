@@ -12,6 +12,7 @@ export const createDataPlanSchema = z.object({
   planId: z.any(),
   isPopular: z.boolean().default(false),
   provider: z.enum(["smePlug", "buyVTU"]),
+  dataAmount: z.number().positive().optional(),
 });
 
 // Form schema with validation
@@ -33,6 +34,10 @@ export const formSchema = z.object({
   provider: z.enum(["smePlug", "buyVTU"], {
     required_error: "Please select a provider",
   }),
+  dataAmount: z.coerce
+    .number()
+    .positive("Data amount must be positive")
+    .optional(),
 });
 
 /**

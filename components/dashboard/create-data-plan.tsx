@@ -69,6 +69,7 @@ export function CreateDataPlanDialog({
       planId: dataPlan?.planId as string,
       isPopular: dataPlan?.isPopular || false,
       provider: dataPlan?.provider || "buyVTU",
+      dataAmount: dataPlan?.dataAmount || undefined,
     },
   });
 
@@ -206,6 +207,31 @@ export function CreateDataPlanDialog({
 
                 <FormField
                   control={form.control}
+                  name="dataAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data Amount (GB)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="rounded-none"
+                          type="number"
+                          step="0.1"
+                          placeholder="e.g. 1.5"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Enter data amount in GB for analytics (e.g., 1.5)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mt-4">
+                <FormField
+                  control={form.control}
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
@@ -225,6 +251,8 @@ export function CreateDataPlanDialog({
                     </FormItem>
                   )}
                 />
+
+                <div></div>
               </div>
 
               <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mt-4">
