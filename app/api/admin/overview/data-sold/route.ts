@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { httpStatusResponse } from "@/lib/utils";
 import { Transaction } from "@/models/transactions";
+import { DataPlan } from "@/models/data-plan";
 
 type Timeframe = "today" | "yesterday" | "last-week" | "all";
 
@@ -76,69 +77,83 @@ export async function GET(request: NextRequest) {
   try {
     await connectToDatabase();
 
-    const sp = request.nextUrl.searchParams;
-    const timeframe = (sp.get("timeframe") as Timeframe) || "today";
-    const network = sp.get("network"); // Optional: Mtn | Airtel | Glo | 9Mobile
+    const sp = request?.nextUrl?.searchParams;
+    const timeframe = (sp?.get("timeframe") as Timeframe) || "today";
+    const network = sp?.get("network");
 
     const createdAtRange = getDateRange(timeframe);
 
-    const matchStage: Record<string, any> = {
-      type: "data",
-      status: "success",
-    };
-
-    if (Object.keys(createdAtRange).length > 0) {
-      matchStage.createdAt = createdAtRange;
+    // Step 1: Get all data plans (with optional network filter)
+    const dataPlanFilter: any = {};
+    if (network) {
+      dataPlanFilter.network = network;
     }
 
-    // Only transactions that have a dataId in meta
-    matchStage["meta.dataId"] = { $exists: true, $ne: null };
+    const dataPlans = await DataPlan?.find(dataPlanFilter)?.lean();
 
-    const pipeline: any[] = [
-      { $match: matchStage },
-      // Join DataPlan by meta.dataId to get network, type, and dataAmount
-      {
-        $lookup: {
-          from: "dataplans",
-          let: { planId: "$meta.dataId" },
-          pipeline: [
-            {
-              $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$planId" }] } },
-            },
-            { $project: { network: 1, type: 1, dataAmount: 1 } },
-          ],
-          as: "plan",
-        },
-      },
-      { $unwind: { path: "$plan", preserveNullAndEmptyArrays: false } },
-      // Optional network filter
-      ...(network ? [{ $match: { "plan.network": network } }] : []),
-      {
-        $group: {
-          _id: { network: "$plan.network", type: "$plan.type" },
-          dataAmountSold: { $sum: { $ifNull: ["$plan.dataAmount", 0] } },
-          amount: { $sum: "$amount" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          network: "$_id.network",
-          type: "$_id.type",
-          dataAmountSold: 1,
-          amount: 1,
-        },
-      },
-      { $sort: { network: 1, type: 1 } },
-    ];
+    // Step 2: For each data plan, find transactions and calculate totals
+    const results = [];
 
-    const result = await Transaction.aggregate(pipeline);
+    for (const plan of dataPlans || []) {
+      // Build transaction filter
+      const transactionFilter: any = {
+        type: "data",
+        status: "success",
+        "meta.dataId": plan?._id?.toString(),
+      };
+
+      // Add date range if not "all"
+      if (Object.keys(createdAtRange || {}).length > 0) {
+        transactionFilter.createdAt = createdAtRange;
+      }
+
+      // Get transactions for this plan
+      const transactions = await Transaction?.find(transactionFilter)?.lean();
+
+      if (transactions?.length > 0) {
+        // Calculate totals
+        const totalAmount =
+          transactions?.reduce((sum, tx) => sum + (tx?.amount || 0), 0) || 0;
+        const totalDataAmount =
+          (plan?.dataAmount || 0) * (transactions?.length || 0);
+
+        results.push({
+          network: plan?.network,
+          type: plan?.type,
+          dataAmountSold: totalDataAmount,
+          amount: totalAmount,
+        });
+      }
+    }
+
+    // Step 3: Group by network and type
+    const groupedResults: Record<string, any> = {};
+
+    results?.forEach((item) => {
+      const key = `${item?.network}-${item?.type}`;
+      if (groupedResults?.[key]) {
+        groupedResults[key].dataAmountSold += item?.dataAmountSold || 0;
+        groupedResults[key].amount += item?.amount || 0;
+      } else {
+        groupedResults[key] = { ...item };
+      }
+    });
+
+    // Convert to array and sort
+    const finalResults =
+      Object.values(groupedResults || {})?.sort((a: any, b: any) => {
+        if (a?.network !== b?.network) {
+          return (a?.network || "").localeCompare(b?.network || "");
+        }
+        return (a?.type || "").localeCompare(b?.type || "");
+      }) || [];
 
     return NextResponse.json(
-      httpStatusResponse(200, undefined, { items: result }),
+      httpStatusResponse(200, undefined, { items: finalResults || [] }),
       { status: 200 }
     );
   } catch (error) {
+    console.error("Error in data-sold API:", error);
     return NextResponse.json(
       httpStatusResponse(
         500,
