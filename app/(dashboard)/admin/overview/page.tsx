@@ -244,14 +244,16 @@ export default function DashboardPage() {
                     Network
                   </label>
                   <Select
-                    value={dataSoldNetwork}
-                    onValueChange={(val) => setDataSoldNetwork(val)}
+                    value={dataSoldNetwork || "all"}
+                    onValueChange={(val) =>
+                      setDataSoldNetwork(val === "all" ? "" : val)
+                    }
                   >
                     <SelectTrigger className="w-44">
                       <SelectValue placeholder="All" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
                       <SelectItem value="Mtn">Mtn</SelectItem>
                       <SelectItem value="Airtel">Airtel</SelectItem>
                       <SelectItem value="Glo">Glo</SelectItem>

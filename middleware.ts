@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 
 // Define only public routes - everything else requires authentication
 const PUBLIC_ROUTES = [
+  "/",
   "/auth/sign-in",
   "/auth/sign-up",
   "/auth/forget-password",
@@ -14,6 +15,8 @@ const PUBLIC_ROUTES = [
   "/auth/reset-password",
   "/api/auth/reset-password",
   "/sitemap.xml",
+  "/privacy",
+  "/terms",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -75,8 +78,8 @@ export async function middleware(request: NextRequest) {
       );
     }
 
-    // For regular routes, redirect to sign-in
-    return NextResponse.redirect(new URL("/", request.url));
+    // For regular routes, redirect to sign-in (not to root to avoid loops)
+    return NextResponse.redirect(new URL("/auth/sign-in", request.url));
   }
 
   // Check for admin routes - restrict to admin users only
