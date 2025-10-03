@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       const transactionFilter: any = {
         type: "data",
         status: "success",
-        "meta.dataId": plan?._id?.toString(),
+        "meta.dataId": plan?._id,
       };
 
       // Add date range if not "all"

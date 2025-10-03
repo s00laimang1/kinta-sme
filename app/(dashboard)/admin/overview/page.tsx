@@ -311,7 +311,7 @@ export default function DashboardPage() {
                         <tr key={idx} className="border-t">
                           <td className="py-2 pr-4">{item.network}</td>
                           <td className="py-2 pr-4">{item.type}</td>
-                          <td className="py-2 pr-4">{item.dataAmountSold}</td>
+                          <td className="py-2 pr-4">{`${item.dataAmountSold}GB`}</td>
                           <td className="py-2 pr-4">{item.amount}</td>
                         </tr>
                       ))}
