@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { httpStatusResponse } from "@/lib/utils";
 import { Transaction } from "@/models/transactions";
-import { DataPlan } from "@/models/data-plan";
+// DataPlan no longer needed for aggregation; we compute from transaction meta
 
 type Timeframe = "today" | "yesterday" | "last-week" | "all";
 
@@ -83,63 +83,51 @@ export async function GET(request: NextRequest) {
 
     const createdAtRange = getDateRange(timeframe);
 
-    // Step 1: Get all data plans (with optional network filter)
-    const dataPlanFilter: any = {};
+    // Step 1: Fetch all successful data transactions within timeframe
+    const transactionFilter: any = {
+      type: "data",
+      status: "success",
+    };
+    if (Object.keys(createdAtRange || {}).length > 0) {
+      transactionFilter.createdAt = createdAtRange;
+    }
     if (network) {
-      dataPlanFilter.network = network;
+      transactionFilter["meta.network"] = network;
     }
 
-    const dataPlans = await DataPlan?.find(dataPlanFilter)?.lean();
+    const dataTransactions = await Transaction?.find(transactionFilter)?.lean();
 
-    // Step 2: For each data plan, find transactions and calculate totals
-    const results = [];
-
-    for (const plan of dataPlans || []) {
-      // Build transaction filter
-      const transactionFilter: any = {
-        type: "data",
-        status: "success",
-        "meta.dataId": plan?._id,
-      };
-
-      // Add date range if not "all"
-      if (Object.keys(createdAtRange || {}).length > 0) {
-        transactionFilter.createdAt = createdAtRange;
-      }
-
-      // Get transactions for this plan
-      const transactions = await Transaction?.find(transactionFilter)?.lean();
-
-      if (transactions?.length > 0) {
-        // Calculate totals
-        const totalAmount =
-          transactions?.reduce((sum, tx) => sum + (tx?.amount || 0), 0) || 0;
-        const totalDataAmount =
-          (plan?.dataAmount || 0) * (transactions?.length || 0);
-
-        results.push({
-          network: plan?.network,
-          type: plan?.type,
-          dataAmountSold: totalDataAmount,
-          amount: totalAmount,
-        });
-      }
+    if (!dataTransactions?.length) {
+      return NextResponse.json(
+        httpStatusResponse(200, undefined, { items: [] }),
+        { status: 200 }
+      );
     }
 
-    // Step 3: Group by network and type
+    // Step 2: Aggregate directly from transaction meta by network and type
     const groupedResults: Record<string, any> = {};
 
-    results?.forEach((item) => {
-      const key = `${item?.network}-${item?.type}`;
-      if (groupedResults?.[key]) {
-        groupedResults[key].dataAmountSold += item?.dataAmountSold || 0;
-        groupedResults[key].amount += item?.amount || 0;
-      } else {
-        groupedResults[key] = { ...item };
-      }
-    });
+    for (const tx of dataTransactions || []) {
+      const meta = tx?.meta || {};
+      const net = meta?.network;
+      const typ = meta?.type;
+      if (!net || !typ) continue;
 
-    // Convert to array and sort
+      const key = `${net}-${typ}`;
+      if (!groupedResults[key]) {
+        groupedResults[key] = {
+          network: net,
+          type: typ,
+          dataAmountSold: 0,
+          amount: 0,
+        };
+      }
+
+      groupedResults[key].amount += Number(tx?.amount || 0);
+      groupedResults[key].dataAmountSold += Number(meta?.dataAmount || 0);
+    }
+
+    // Step 3: Convert to array and sort
     const finalResults =
       Object.values(groupedResults || {})?.sort((a: any, b: any) => {
         if (a?.network !== b?.network) {
