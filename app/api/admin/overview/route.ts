@@ -13,18 +13,19 @@ export async function GET() {
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
-      0,
-      0,
-      0
+      23,
+      59,
+      59,
+      999
     );
     const endOfDay = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
-      23,
-      59,
-      59,
-      999
+      0,
+      0,
+      0,
+      0
     );
 
     const totalTransactions = await Transaction.aggregate([
