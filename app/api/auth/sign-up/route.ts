@@ -122,7 +122,7 @@ export async function POST(request: Request) {
 
         const qClient = new QClient({ token: qStashKey || "" });
         await qClient.publishJSON({
-          url: process.env.NEXT_PUBLIC_BASE_URL!,
+          url: "https://miscellaneous-kinta.vercel.app/api/generate-dedicated-account-number",
           body: {
             userId: user[0]._id.toString(),
             signature:
