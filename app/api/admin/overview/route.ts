@@ -13,7 +13,7 @@ export async function GET() {
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
-      0,
+      1, // 1 AM
       0,
       0,
       0
@@ -22,10 +22,10 @@ export async function GET() {
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
-      23,
-      59,
-      59,
-      999
+      12, // 12 PM
+      59, // 59 minutes
+      59, // 59 seconds
+      999 // 999 milliseconds
     );
 
     const totalTransactions = await Transaction.aggregate([
