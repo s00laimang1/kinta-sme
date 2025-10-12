@@ -2,74 +2,119 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/connect-to-db";
 import { httpStatusResponse } from "@/lib/utils";
 import { Transaction } from "@/models/transactions";
-// DataPlan no longer needed for aggregation; we compute from transaction meta
 
 type Timeframe = "today" | "yesterday" | "last-week" | "all";
 
+// Timezone constant
+const TIMEZONE = "Africa/Lagos"; // West Africa Time (WAT/UTC+1)
+const WAT_OFFSET_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+
+/**
+ * Get date range for a given timeframe in Nigeria timezone (WAT)
+ * Returns dates adjusted for querying UTC-stored MongoDB timestamps
+ */
 function getDateRange(timeframe: Timeframe) {
   if (timeframe === "all") return {} as Record<string, any>;
 
   const now = new Date();
 
+  // Adjust current time to WAT
+  const watNow = new Date(now.getTime() + WAT_OFFSET_MS);
+
   if (timeframe === "today") {
+    // Start of day at 00:00:00 WAT (stored as UTC)
     const start = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      1, // 1 AM
-      0,
-      0,
-      0
+      Date.UTC(
+        watNow.getUTCFullYear(),
+        watNow.getUTCMonth(),
+        watNow.getUTCDate(),
+        0,
+        0,
+        0,
+        0
+      ) - WAT_OFFSET_MS
     );
+
+    // End of day at 23:59:59.999 WAT (stored as UTC)
     const end = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      12, // 12 PM
-      59, // 59 minutes
-      59, // 59 seconds
-      999 // 999 milliseconds
+      Date.UTC(
+        watNow.getUTCFullYear(),
+        watNow.getUTCMonth(),
+        watNow.getUTCDate(),
+        23,
+        59,
+        59,
+        999
+      ) - WAT_OFFSET_MS
     );
+
     return { $gte: start, $lte: end };
   }
 
   if (timeframe === "yesterday") {
-    const y = new Date(now);
-    y.setDate(now.getDate() - 1);
+    // Get yesterday in WAT
+    const watYesterday = new Date(watNow);
+    watYesterday.setUTCDate(watNow.getUTCDate() - 1);
+
+    // Start of yesterday at 00:00:00 WAT (stored as UTC)
     const start = new Date(
-      y.getFullYear(),
-      y.getMonth(),
-      y.getDate(),
+      Date.UTC(
+        watYesterday.getUTCFullYear(),
+        watYesterday.getUTCMonth(),
+        watYesterday.getUTCDate(),
+        0,
+        0,
+        0,
+        0
+      ) - WAT_OFFSET_MS
+    );
+
+    // End of yesterday at 23:59:59.999 WAT (stored as UTC)
+    const end = new Date(
+      Date.UTC(
+        watYesterday.getUTCFullYear(),
+        watYesterday.getUTCMonth(),
+        watYesterday.getUTCDate(),
+        23,
+        59,
+        59,
+        999
+      ) - WAT_OFFSET_MS
+    );
+
+    return { $gte: start, $lte: end };
+  }
+
+  // last-week: last 7 full days including today in WAT
+  const watStartDay = new Date(watNow);
+  watStartDay.setUTCDate(watNow.getUTCDate() - 6);
+
+  // Start of 7 days ago at 00:00:00 WAT (stored as UTC)
+  const start = new Date(
+    Date.UTC(
+      watStartDay.getUTCFullYear(),
+      watStartDay.getUTCMonth(),
+      watStartDay.getUTCDate(),
       0,
       0,
       0,
       0
-    );
-    const end = new Date(
-      y.getFullYear(),
-      y.getMonth(),
-      y.getDate(),
+    ) - WAT_OFFSET_MS
+  );
+
+  // End of today at 23:59:59.999 WAT (stored as UTC)
+  const end = new Date(
+    Date.UTC(
+      watNow.getUTCFullYear(),
+      watNow.getUTCMonth(),
+      watNow.getUTCDate(),
       23,
       59,
       59,
       999
-    );
-    return { $gte: start, $lte: end };
-  }
-
-  // last-week: last 7 full days including today
-  const start = new Date(now);
-  start.setDate(now.getDate() - 6);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    23,
-    59,
-    59,
-    999
+    ) - WAT_OFFSET_MS
   );
+
   return { $gte: start, $lte: end };
 }
 
