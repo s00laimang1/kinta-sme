@@ -36,6 +36,7 @@ import {
   exportTransactions,
   formatCurrency,
   getTransactionsForAdmin,
+  refundTransactionsBulk,
 } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,6 +53,7 @@ import { Label } from "@/components/ui/label";
 import { transactionRequestProps, transactionStatus } from "@/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function TransactionsPage() {
   const router = useRouter();
@@ -68,7 +70,7 @@ export default function TransactionsPage() {
   const [exportLimit, setExportLimit] = useState("100");
   const [isExporting, setIsExporting] = useState(false);
 
-  const { isLoading, data, error } = useQuery({
+  const { isLoading, data, error, refetch } = useQuery({
     queryKey: ["transactions", requestParams, searchInput],
     queryFn: () =>
       getTransactionsForAdmin({
@@ -80,6 +82,55 @@ export default function TransactionsPage() {
   });
 
   const { transactions = [], pagination } = data?.data || {};
+
+  // Refund Failed Dialog state
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [selectedRefundIds, setSelectedRefundIds] = useState<string[]>([]);
+  const [isRefunding, setIsRefunding] = useState(false);
+
+  const failedTransactions = (transactions || []).filter(
+    (t) => t.status === "failed"
+  );
+
+  const openRefundDialog = () => {
+    setSelectedRefundIds(
+      failedTransactions.map((t) => String(t.transaction_id))
+    );
+    setRefundDialogOpen(true);
+  };
+
+  const toggleRefundSelection = (id: string, checked: boolean | string) => {
+    setSelectedRefundIds((prev) => {
+      const isChecked = Boolean(checked);
+      if (isChecked) {
+        return prev.includes(id) ? prev : [...prev, id];
+      }
+      return prev.filter((x) => x !== id);
+    });
+  };
+
+  const handleRefundSelected = async () => {
+    try {
+      if (selectedRefundIds.length === 0) {
+        toast.error("Select at least one failed transaction");
+        return;
+      }
+      setIsRefunding(true);
+      const res = await refundTransactionsBulk(selectedRefundIds);
+      const summary = res?.data?.summary;
+      toast.success(
+        `Refund complete: ${summary?.succeeded || 0} succeeded, ${
+          summary?.failed || 0
+        } failed`
+      );
+      setRefundDialogOpen(false);
+      await refetch();
+    } catch (e: any) {
+      toast.error(e?.message || "Refund failed");
+    } finally {
+      setIsRefunding(false);
+    }
+  };
 
   // Handle pagination
   const handlePreviousPage = () => {
@@ -371,14 +422,24 @@ export default function TransactionsPage() {
             View and manage financial transactions.
           </p>
         </div>
-        <Button
-          variant="outline"
-          className="rounded-none"
-          onClick={() => setExportDialogOpen(true)}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Export
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="rounded-none"
+            onClick={() => setExportDialogOpen(true)}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          <Button
+            variant="outline"
+            className="rounded-none"
+            onClick={openRefundDialog}
+            disabled={failedTransactions.length === 0}
+          >
+            Refund failed
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -604,6 +665,108 @@ export default function TransactionsPage() {
                 </>
               ) : (
                 "Export"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund Failed Dialog */}
+      <Dialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen}>
+        <DialogContent className="sm:max-w-[640px] rounded-none">
+          <DialogHeader>
+            <DialogTitle>Refund Failed Transactions</DialogTitle>
+            <DialogDescription>
+              Select which failed transactions to refund now. You can remove or
+              re-add items before confirming.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[50vh] overflow-auto border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[40px]"></TableHead>
+                  <TableHead>Transaction ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {failedTransactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-muted-foreground"
+                    >
+                      No failed transactions on this page
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  failedTransactions.map((t) => {
+                    const id = String(t.transaction_id);
+                    const checked = selectedRefundIds.includes(id);
+                    return (
+                      <TableRow key={id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) =>
+                              toggleRefundSelection(id, v as boolean | string)
+                            }
+                            aria-label="Select transaction"
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">{id}</TableCell>
+                        <TableCell>{t.userfullName}</TableCell>
+                        <TableCell>{formatCurrency(t.amount, 1)}</TableCell>
+                        <TableCell>{t.createdAt}</TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Select all failed
+                setSelectedRefundIds(
+                  failedTransactions.map((t) => String(t.transaction_id))
+                );
+              }}
+              className="rounded-none"
+            >
+              Select all
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedRefundIds([])}
+              className="rounded-none"
+            >
+              Clear all
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setRefundDialogOpen(false)}
+              className="rounded-none"
+            >
+              Cancel
+            </Button>
+            <Button
+              className="rounded-none"
+              onClick={handleRefundSelected}
+              disabled={isRefunding || selectedRefundIds.length === 0}
+            >
+              {isRefunding ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Refunding...
+                </>
+              ) : (
+                `Refund ${selectedRefundIds.length || 0}`
               )}
             </Button>
           </DialogFooter>

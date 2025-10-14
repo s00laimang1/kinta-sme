@@ -216,6 +216,13 @@ export interface apiResponse<T = any> {
   code?: string | number;
 }
 
+export const refundTransactionsBulk = async (ids: string[]) => {
+  const response = await api.post<
+    apiResponse<{ results: any[]; summary: any }>
+  >("/admin/overview/transactions/refund", { ids });
+  return response.data;
+};
+
 export const getUser = async () => {
   const res = await api.get<apiResponse<IUser>>("/users/me");
 
