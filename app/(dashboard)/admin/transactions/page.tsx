@@ -93,9 +93,7 @@ export default function TransactionsPage() {
   );
 
   const openRefundDialog = () => {
-    setSelectedRefundIds(
-      failedTransactions.map((t) => String(t.transaction_id))
-    );
+    setSelectedRefundIds(failedTransactions.map((t) => String(t._id)));
     setRefundDialogOpen(true);
   };
 
@@ -704,7 +702,7 @@ export default function TransactionsPage() {
                   </TableRow>
                 ) : (
                   failedTransactions.map((t) => {
-                    const id = String(t.transaction_id);
+                    const id = String(t._id);
                     const checked = selectedRefundIds.includes(id);
                     return (
                       <TableRow key={id}>
@@ -734,7 +732,7 @@ export default function TransactionsPage() {
               onClick={() => {
                 // Select all failed
                 setSelectedRefundIds(
-                  failedTransactions.map((t) => String(t.transaction_id))
+                  failedTransactions.map((t) => String(t._id))
                 );
               }}
               className="rounded-none"
