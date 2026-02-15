@@ -15,7 +15,7 @@ const BalanceCard: FC<{ flexBtn?: boolean }> = ({ flexBtn }) => {
       <CardContent
         className={cn(
           "flex items-center justify-between flex-wrap",
-          flexBtn && "flex-col items-start justify-start"
+          flexBtn && "flex-col items-start justify-start",
         )}
       >
         <div className="flex items-baseline">

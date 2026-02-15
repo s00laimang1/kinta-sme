@@ -102,11 +102,11 @@ const AppSchema: mongoose.Schema<appProps> = new mongoose.Schema({
 });
 
 AppSchema.methods.isTransactionEnable = async function (
-  transactionType?: transactionType
+  transactionType?: transactionType,
 ) {
   if (this?.stopAllTransactions) {
     throw new Error(
-      "ALL_TRANSACTIONS_DISABLE: All transactions has been disable, please contact the admin"
+      "ALL_TRANSACTIONS_DISABLE: All transactions has been disable, please contact the admin",
     );
   }
 
@@ -115,7 +115,7 @@ AppSchema.methods.isTransactionEnable = async function (
 
     if (transactionsToStop.includes(transactionType)) {
       throw new Error(
-        `${transactionType.toUpperCase()}_TRANSACTION_HAS_BEEN_STOPPED: this transaction has stopped, please contact the admin.`
+        `${transactionType.toUpperCase()}_TRANSACTION_HAS_BEEN_STOPPED: this transaction has stopped, please contact the admin.`,
       );
     }
   }
@@ -134,7 +134,7 @@ AppSchema.methods.checkTransactionLimit = async function (amount: number) {
 
   if (amount >= Number(this.transactionLimit)) {
     throw new Error(
-      "TRANSACTION_LIMIT_EXCEEDED: this transaction limit has been exceeded."
+      "TRANSACTION_LIMIT_EXCEEDED: this transaction limit has been exceeded.",
     );
   }
 };
@@ -142,7 +142,7 @@ AppSchema.methods.checkTransactionLimit = async function (amount: number) {
 AppSchema.methods.systemIsunderMaintainance = async function () {
   if (this?.maintenanceMode) {
     throw new Error(
-      "SYSTEM_IS_UNDER_MAINTENANCE: All transactions may be paused or delayed for maintenance."
+      "SYSTEM_IS_UNDER_MAINTENANCE: All transactions may be paused or delayed for maintenance.",
     );
   }
 };
@@ -150,7 +150,7 @@ AppSchema.methods.systemIsunderMaintainance = async function () {
 AppSchema.methods.isAccountCreationStopped = async function () {
   if (this?.stopAccountCreation) {
     throw new Error(
-      "ACCOUNT_CREATION_TEMPORARILY_STOPPED: please contact the admin"
+      "ACCOUNT_CREATION_TEMPORARILY_STOPPED: please contact the admin",
     );
   }
 };
@@ -214,7 +214,7 @@ AppSchema.methods.addOrRemoveDisablePlans = async function (plan: string) {
 };
 
 const App: mongoose.Model<appProps> =
-  mongoose.models.App || mongoose.model<appProps>("App", AppSchema);
+  mongoose?.models?.App || mongoose?.model<appProps>("App", AppSchema);
 
 const accountRequiresVerificationBeforeVirtualAccountActivation = async () => {
   const app = await App.findOne({});
@@ -245,7 +245,7 @@ const systemPasswordPolicy = async (password: string) => {
         !/[a-zA-Z]/.test(password)
       ) {
         throw new Error(
-          "Password must be at least 8 characters long and include at least one letter and one number"
+          "Password must be at least 8 characters long and include at least one letter and one number",
         );
       }
       break;
@@ -259,7 +259,7 @@ const systemPasswordPolicy = async (password: string) => {
         !/\d/.test(password)
       ) {
         throw new Error(
-          "Password must be at least 10 characters long and include an uppercase letter, a lowercase letter, and a number"
+          "Password must be at least 10 characters long and include an uppercase letter, a lowercase letter, and a number",
         );
       }
       break;
@@ -274,7 +274,7 @@ const systemPasswordPolicy = async (password: string) => {
         !/[!@#$%^&*(),.?":{}|<>]/.test(password)
       ) {
         throw new Error(
-          "Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a special character"
+          "Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a special character",
         );
       }
       break;

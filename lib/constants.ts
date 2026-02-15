@@ -10,7 +10,7 @@ import { CreditCard, GraduationCap, Zap } from "lucide-react";
 
 export const configs = {
   appName: "KINTA SME",
-  "X-RAPIDAPI-HOST": process.env["X-RAPIDAPI-HOST"],
+  "X-RAPIDAPI-HOST": process.env["X_RAPIDAPI_HOST"],
   "X-RAPIDAPI-KEY": process.env["NEXT_PUBLIC_X_RAPIDAPI_KEY"],
   FLW_ENCRYPTION_KEY: process.env["FLW_ENCRYPTION_KEY"],
   FLW_PUBK: process.env["FLW_PUBK"],

@@ -57,7 +57,7 @@ const TransactionSchema: mongoose.Schema<transaction> = new mongoose.Schema(
   },
   {
     timestamps: true, // Added timestamps for better tracking
-  }
+  },
 );
 
 TransactionSchema.post("save", async function (doc) {
@@ -84,7 +84,7 @@ TransactionSchema.post("save", async function (doc) {
           day: "numeric",
           hour: "2-digit",
           minute: "2-digit",
-        }
+        },
       );
 
       // Create HTML email content
@@ -98,7 +98,7 @@ TransactionSchema.post("save", async function (doc) {
           
           <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <p style="margin: 5px 0;"><strong>Amount:</strong> ${formatCurrency(
-              doc.amount
+              doc.amount,
             )}</p>
             <p style="margin: 5px 0;"><strong>Transaction ID:</strong> ${
               transaction._id
@@ -115,8 +115,8 @@ TransactionSchema.post("save", async function (doc) {
           
           <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
             <p style="color: #888; font-size: 12px;">© ${new Date().getFullYear()} ${
-        configs.appName
-      }. All rights reserved.</p>
+              configs.appName
+            }. All rights reserved.</p>
           </div>
         </div>
       `;
@@ -141,7 +141,7 @@ TransactionSchema.post("save", async function (doc) {
 });
 
 const Transaction: mongoose.Model<transaction> =
-  mongoose.models.Transaction ||
-  mongoose.model<transaction>("Transaction", TransactionSchema);
+  mongoose?.models?.Transaction ||
+  mongoose?.model<transaction>("Transaction", TransactionSchema);
 
 export { Transaction };

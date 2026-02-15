@@ -11,6 +11,7 @@ import { BuyVTU } from "@/lib/server-utils";
 import { dataPlan, IBuyVtuNetworks } from "@/types";
 import { format } from "date-fns";
 import { Transaction } from "@/models/transactions"; // Add this import
+import { inngest } from "@/inngest/client";
 
 // Add a new schema for idempotency
 const dataRequestSchemaWithIdempotency = dataRequestSchema.extend({
@@ -31,9 +32,9 @@ export async function POST(request: Request) {
         httpStatusResponse(
           400,
           "INVALID_DATA_REQUEST: The format of your request is invalid",
-          validationResult.error.format()
+          validationResult.error.format(),
         ),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,9 +48,10 @@ export async function POST(request: Request) {
 
     // Get the email of the current authenticated user
     const serverSession = await getServerSession();
+
     if (!serverSession?.user?.email) {
       throw new Error(
-        "UNAUTHORIZED_REQUEST: Please login before you continue."
+        "UNAUTHORIZED_REQUEST: Please login before you continue.",
       );
     }
 
@@ -59,7 +61,7 @@ export async function POST(request: Request) {
 
     // Find the current user in the db
     user = await User.findOne({ "auth.email": userEmail }).select(
-      "+auth.transactionPin"
+      "+auth.transactionPin",
     );
 
     if (!user) {
@@ -68,7 +70,7 @@ export async function POST(request: Request) {
 
     // Check for existing transaction with same idempotency key (if provided)
     if (idempotencyKey) {
-      const existingTransaction = await Transaction.findOne({
+      const existingTransaction = await Transaction.exists({
         user: user._id,
         "meta.idempotencyKey": idempotencyKey,
         type: "data",
@@ -77,15 +79,15 @@ export async function POST(request: Request) {
         },
       });
 
-      if (existingTransaction) {
+      if (!!existingTransaction?._id) {
         // Return the existing transaction result
         return NextResponse.json(
           httpStatusResponse(
             200,
             "Transaction already processed",
-            existingTransaction.meta
+            existingTransaction._id,
           ),
-          { status: 200 }
+          { status: 200 },
         );
       }
     }
@@ -102,7 +104,7 @@ export async function POST(request: Request) {
 
     if (dataPlan.isDisabled || dataPlan.removedFromList) {
       throw new Error(
-        "PLAN_DISABLED: this plan is disabled and cannot be purchased at the moment"
+        "PLAN_DISABLED: this plan is disabled and cannot be purchased at the moment",
       );
     }
 
@@ -124,7 +126,7 @@ export async function POST(request: Request) {
     if (!!disablePlan) {
       return NextResponse.json(
         httpStatusResponse(400, "Plan has been disabled"),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -146,7 +148,7 @@ export async function POST(request: Request) {
     // Update user balance with session
     await user.updateOne(
       { $inc: { balance: -dataPlan.amount } },
-      { session: buyVtu.session }
+      { session: buyVtu.session },
     );
 
     // Create transaction record BEFORE making external API calls
@@ -170,71 +172,27 @@ export async function POST(request: Request) {
     await buyVtu.commitSession();
     isTransactionCommitted = true;
 
-    // Now make external API calls AFTER committing the transaction
-    let vendingSuccess = false;
-    let vendingMessage = "";
-
-    try {
-      if (
-        dataPlan.network.toLowerCase() === "mtn" ||
-        dataPlan.network.toLowerCase() === "airtel"
-      ) {
-        // Use abanty data sme
-        const n: Record<string, any> = {
-          mtn: "1",
-          airtel: "2",
-          "9mobile": "3",
-          glo: "4",
-        };
-
-        await buyVtu.buyDataFromSMEPLUG(
-          n[dataPlan.network.toLowerCase()],
-          dataPlan.planId as number,
-          phoneNumber,
-          dataPlan.amount,
-          transactionRef
-        );
-      } else {
-        const networdId: Record<IBuyVtuNetworks, string> = {
-          Mtn: "1",
-          Airtel: "airtel-data",
-          Glo: dataPlan.type === "SME" ? "glo-sme-data" : "glo-data",
-          "9Mobile": "etisalat-data",
-        };
-
-        await buyVtu.buyDataFromVtuPass({
-          phone: phoneNumber,
-          request_id: transactionRef,
-          serviceID: networdId[dataPlan?.network!] as "airtel-data",
-          variation_code: dataPlan?.planId as string,
-        });
-      }
-
-      vendingSuccess = buyVtu.status;
-      vendingMessage = buyVtu.message || "";
-    } catch (vendingError) {
-      vendingSuccess = false;
-      //vendingMessage =
-      //  vendingError instanceof Error ? vendingError.message : "Vending failed";
-    }
-
-    // Update transaction status based on vending result
-    await buyVtu.updateTransactionStatus(vendingSuccess, vendingMessage);
+    // Send event to Inngest
+    await inngest.send({
+      name: "kinta-sme/purchase.data",
+      data: {
+        phoneNumber,
+        planId: dataPlan._id,
+        userEmail,
+        transactionId: transactionRef,
+      },
+    });
 
     return NextResponse.json(
       httpStatusResponse(
-        vendingSuccess ? 200 : 400,
-        vendingSuccess
-          ? buyVtu.message || "Your data has been purchased successfully"
-          : vendingMessage ||
-              "Oops, something went wrong while purchasing data for you",
+        200,
+        "Your data purchase is being processed. You will be notified once it is completed.",
         {
-          ...buyVtu.vendingResponse,
           transactionRef: transactionRef,
-          vendingSuccess: vendingSuccess,
-        }
+          vendingSuccess: true,
+        },
       ),
-      { status: vendingSuccess ? 200 : 400 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Data purchase error:", error);

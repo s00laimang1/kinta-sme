@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 const RecentlyUsedContactSchema: mongoose.Schema<recentlyUsedContact> =
   new mongoose.Schema({
     meta: {
-      type: mongoose.SchemaTypes.Mixed,
+      type: mongoose?.SchemaTypes?.Mixed,
     },
     type: {
       type: String,
@@ -27,14 +27,14 @@ const RecentlyUsedContactSchema: mongoose.Schema<recentlyUsedContact> =
   });
 
 const RecentlyUsedContact: mongoose.Model<recentlyUsedContact> =
-  mongoose.models.RecentlyUsedContact ||
-  mongoose.model("RecentlyUsedContact", RecentlyUsedContactSchema);
+  mongoose?.models?.RecentlyUsedContact ||
+  mongoose?.model("RecentlyUsedContact", RecentlyUsedContactSchema);
 
 const addToRecentlyUsedContact = async (
   uid: string,
   type: transactionType,
   meta: any,
-  session?: any
+  session?: any,
 ) => {
   try {
     const contactAlreadyExist = await RecentlyUsedContact.findOne({

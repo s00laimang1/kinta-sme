@@ -1,4 +1,4 @@
-import { PATHS, transactionStatus } from "@/types";
+import { PATHS, transaction, transactionStatus } from "@/types";
 import React, { FC, useEffect, useState } from "react";
 import {
   Dialog,
@@ -15,9 +15,30 @@ import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { useDashboard } from "@/stores/dashboard.store";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/utils";
 
 export const NotificationModal: FC<{}> = ({}) => {
   const { notification, setNotification } = useDashboard();
+
+  const { data: transaction, isError } = useQuery({
+    queryKey: ["transaction", notification.options?.tx_ref],
+    queryFn: async () => {
+      const res = await api.get<{ data: transaction }>(
+        `/transactions/get-transaction?tx_ref=${notification.options?.tx_ref}`,
+      );
+
+      setNotification(true, {
+        type: res.data.data.status,
+        tx_ref: res.data.data.tx_ref,
+        title: "Transaction Completed Successfully",
+        description:
+          res.data.data.meta?.vendingMessage ||
+          "Your transaction has been completed successfully and your data has been sent to your phone number.",
+      });
+      return res.data;
+    },
+  });
 
   const data: Record<transactionStatus, any> = {
     failed: {
@@ -47,6 +68,7 @@ export const NotificationModal: FC<{}> = ({}) => {
 
   return (
     <Dialog
+      key={notification.options?.type}
       open={notification.open}
       onOpenChange={(e) => {
         setNotification(e);

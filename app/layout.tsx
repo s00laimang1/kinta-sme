@@ -3,8 +3,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { configs } from "@/lib/constants";
-import { BrowserCompatibilityProvider } from "@/components/browser-compatibility-provider";
-import { OptimizationProvider } from "@/components/optimization-provider";
 
 // Performance monitoring is imported dynamically in a client component to avoid SSR issues
 

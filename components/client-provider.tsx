@@ -18,10 +18,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "@/stores/user.store";
 import { getUser, sendWhatsAppMessage } from "@/lib/utils";
 import Image from "next/image";
-import { error } from "console";
 import { useRouter } from "next/navigation";
 import { PATHS } from "@/types";
 import { NotificationModal } from "./notification-modal";
+import { useConvex, ConvexProvider } from "convex/react";
 
 const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -73,7 +73,7 @@ const ClientProvider: FC<{ children: ReactNode }> = ({ children }) => {
         onClick={() =>
           sendWhatsAppMessage(
             "+2347040666904",
-            `Hello, I want an assistance with`
+            `Hello, I want an assistance with`,
           )
         }
       >

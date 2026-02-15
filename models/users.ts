@@ -1,11 +1,6 @@
-import { processVirtualAccountForUser } from "@/lib/server-utils";
 import { IUser } from "@/types";
 import mongoose from "mongoose";
-import { Account } from "./account";
-import {
-  accountRequiresVerificationBeforeVirtualAccountActivation,
-  systemPasswordPolicy,
-} from "./app";
+import { systemPasswordPolicy } from "./app";
 import bcrypt from "bcryptjs";
 
 const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
@@ -81,7 +76,7 @@ const UserSchema: mongoose.Schema<IUser> = new mongoose.Schema(
       unique: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 UserSchema.pre("save", async function (next) {
@@ -242,17 +237,17 @@ UserSchema.pre("findOneAndUpdate", async function (next) {
 UserSchema.methods.verifyTransactionPin = async function (pin: string) {
   if (!this.auth.transactionPin) {
     throw new Error(
-      "TRANSACTION_PIN_NOT_SET: please contact the admin if you think this is an error."
+      "TRANSACTION_PIN_NOT_SET: please contact the admin if you think this is an error.",
     );
   }
 
   const isTransactionPinMatching = await bcrypt.compare(
     pin,
-    this.auth.transactionPin
+    this.auth.transactionPin,
   );
   if (!isTransactionPinMatching) {
     throw new Error(
-      "INCORRECT_TRANSACTION_PIN: please contact the admin if you think this is an error."
+      "INCORRECT_TRANSACTION_PIN: please contact the admin if you think this is an error.",
     );
   }
 };
@@ -269,14 +264,14 @@ UserSchema.methods.verifyUserBalance = async function (amount: number) {
 };
 
 const User: mongoose.Model<IUser> =
-  mongoose.models.User || mongoose.model("User", UserSchema);
+  mongoose?.models?.User || mongoose?.model("User", UserSchema);
 
 const findUser = async (
   id: string,
-  options = { includePassword: false, throwOn404: false }
+  options = { includePassword: false, throwOn404: false },
 ) => {
   const u = await User.findById(id).select(
-    options.includePassword ? "+auth.password" : ""
+    options.includePassword ? "+auth.password" : "",
   );
 
   if (options.throwOn404 && !u) throw new Error("User not found");
@@ -286,10 +281,10 @@ const findUser = async (
 
 const findUserByEmail = async (
   email: string,
-  options = { includePassword: false, throwOn404: false }
+  options = { includePassword: false, throwOn404: false },
 ) => {
   const u = await User.findOne({ "auth.email": email }).select(
-    options.includePassword ? "+auth.password" : ""
+    options.includePassword ? "+auth.password" : "",
   );
 
   if (options.throwOn404 && !u) throw new Error("User not found");

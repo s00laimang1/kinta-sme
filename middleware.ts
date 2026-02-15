@@ -31,18 +31,18 @@ export async function middleware(request: NextRequest) {
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set(
     "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=()"
+    "camera=(), microphone=(), geolocation=()",
   );
 
   // Uncommented and modified CSP to allow fonts from common providers
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://use.typekit.net https://use.fontawesome.com; connect-src 'self' https://miscellaneous-kinta.vercel.app; frame-ancestors 'none';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://use.typekit.net https://use.fontawesome.com; connect-src 'self' https://miscellaneous-kinta.vercel.app https://lovable-lemur-323.eu-west-1.convex.cloud wss://lovable-lemur-323.eu-west-1.convex.cloud; frame-ancestors 'none';",
   );
 
   response.headers.set(
     "Strict-Transport-Security",
-    "max-age=63072000; includeSubDomains; preload"
+    "max-age=63072000; includeSubDomains; preload",
   );
 
   // Check if the current path is public
@@ -74,7 +74,7 @@ export async function middleware(request: NextRequest) {
             "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
           },
-        }
+        },
       );
     }
 
@@ -98,7 +98,7 @@ export async function middleware(request: NextRequest) {
             "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
           },
-        }
+        },
       );
     }
   }

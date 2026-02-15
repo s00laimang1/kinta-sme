@@ -39,8 +39,6 @@ import {
   validatePhoneNumber as validatePhoneNumberApi,
 } from "./utils";
 import { addToRecentlyUsedContact } from "@/models/recently-used-contact";
-import { createTransport } from "nodemailer";
-import SMTPTransport from "nodemailer/lib/smtp-transport";
 import { Referral } from "@/models/referral";
 
 export const budPay = (type: "s2s" | "v2" = "v2") => {
@@ -59,14 +57,14 @@ export const vtuPassApi = axios.create({
 });
 
 export const createOneTimeVirtualAccount = async (
-  payload: createOneTimeVirtualAccountProps
+  payload: createOneTimeVirtualAccountProps,
 ) => {
   const response = await budPay(
-    "s2s"
+    "s2s",
   ).post<createOneTimeVirtualAccountResponse>(
     `/banktransfer/initialize/`,
     payload,
-    { headers: { Authorization: `Bearer ${process.env.BUDPAY_SECRET_KEY}` } }
+    { headers: { Authorization: `Bearer ${process.env.BUDPAY_SECRET_KEY}` } },
   );
 
   return response.data;
@@ -78,14 +76,14 @@ export const createCustomer = async (payload: createCustomerProps) => {
     payload,
     {
       headers: { Authorization: `Bearer ${process.env.BUDPAY_SECRET_KEY}` },
-    }
+    },
   );
 
   return response.data;
 };
 
 export const createDedicatedVirtualAccount = async (
-  payload: createDedicatedAccountProps
+  payload: createDedicatedAccountProps,
 ) => {
   try {
     const response = await axios.post<createDedicatedVirtualAccountResponse>(
@@ -95,7 +93,7 @@ export const createDedicatedVirtualAccount = async (
         headers: {
           Authorization: `Bearer ${process.env.BILL_STACK_SECRET_KEY}`,
         },
-      }
+      },
     );
 
     return response.data;
@@ -113,7 +111,7 @@ export const verifyTransactionWithBudPay = async (id: string) => {
   try {
     const res = await budPay("s2s").get<fetchTransactionResponse>(
       `/transaction/verify/${id}`,
-      { headers: { Authorization: `Bearer ${process.env.BUDPAY_SECRET_KEY}` } }
+      { headers: { Authorization: `Bearer ${process.env.BUDPAY_SECRET_KEY}` } },
     );
 
     return res.data;
@@ -234,7 +232,7 @@ export async function getChartData(year?: number): Promise<ChartDataPoint[]> {
 
 export async function getTransactionsWithUserDetails(
   options: transactionRequestProps,
-  filters: Record<string, any> = {}
+  filters: Record<string, any> = {},
 ) {
   const {
     startDate,
@@ -266,7 +264,7 @@ export async function getTransactionsWithUserDetails(
       now.getDate(),
       0,
       0,
-      0
+      0,
     );
     const endOfDay = new Date(
       now.getFullYear(),
@@ -275,7 +273,7 @@ export async function getTransactionsWithUserDetails(
       23,
       59,
       59,
-      999
+      999,
     );
 
     match.createdAt = {
@@ -390,7 +388,7 @@ export async function getTransactionByIdWithUserDetails(id: string) {
 
 export async function processVirtualAccountForUser(
   user: IUser,
-  preferableBank: availableBanks = "PALMPAY"
+  preferableBank: availableBanks = "PALMPAY",
 ) {
   const appConfigs = await App.findOne({});
 
@@ -442,7 +440,7 @@ export async function processVirtualAccountForUser(
   if (!account.status) {
     throw new Error(
       account?.message ||
-        "Unable to create a dedicated account for you, please try again later"
+        "Unable to create a dedicated account for you, please try again later",
     );
   }
 
@@ -480,7 +478,7 @@ export async function sendEmail(
   recipients: string[],
   emailTemplate: string,
   subject: string,
-  replyTo?: string
+  replyTo?: string,
 ) {
   //let configOptions: SMTPTransport | SMTPTransport.Options | string = {
   //  host: "smtp-relay.brevo.com",
@@ -511,7 +509,7 @@ export async function sendEmail(
         "Content-Type": "application/json",
         "api-key": process.env.BREVO_API_KEY,
       },
-    }
+    },
   );
 
   //const transporter = createTransport(configOptions);
@@ -550,7 +548,7 @@ export class BuyVTU {
       validatePhoneNumber?: boolean;
       network?: string;
       phoneNumber: string;
-    }
+    },
   ) {
     this.accessToken = accessToken;
     this.transactionPin = process.env.BUY_VTU_TRANSACTION_PIN!;
@@ -565,12 +563,12 @@ export class BuyVTU {
     if (this.validatePhoneNumber) {
       const { isValid } = validatePhoneNumberApi(
         phoneNumberValidatorPayload?.phoneNumber!,
-        phoneNumberValidatorPayload?.network!
+        phoneNumberValidatorPayload?.network!,
       );
 
       if (!isValid) {
         throw new Error(
-          "NETWORK_MISMATCH: this phone number you provided is not matching with the network you selected."
+          "NETWORK_MISMATCH: this phone number you provided is not matching with the network you selected.",
         );
       }
     }
@@ -638,7 +636,7 @@ export class BuyVTU {
         `/networks`,
         {
           headers: { Authorization: `Bearer ${this.accessToken}` },
-        }
+        },
       );
 
       this.networks = resp.data.data;
@@ -681,7 +679,7 @@ export class BuyVTU {
         `/data/plans/${this.getNetworkId(this.network!)}`,
         {
           headers: { Authorization: `Bearer ${this.accessToken}` },
-        }
+        },
       );
 
       this.dataPlans = resp.data.data;
@@ -713,13 +711,13 @@ export class BuyVTU {
           headers: {
             Authorization: `Bearer ${this.accessToken}`,
           },
-        }
+        },
       );
 
       this.vendingResponse = resp.data.data;
       this.status = Boolean(
         resp.data?.success &&
-          resp.data.data.vendReport[phoneNumber] === "successful"
+        resp.data.data.vendReport[phoneNumber] === "successful",
       );
       this.message = !this.status ? "Data vending failed" : resp.data?.message;
 
@@ -750,13 +748,13 @@ export class BuyVTU {
           recipient: phoneNumber,
           networkId: this.getNetworkId(this.network!),
         },
-        { headers: { Authorization: `Bearer ${this.accessToken}` } }
+        { headers: { Authorization: `Bearer ${this.accessToken}` } },
       );
 
       this.vendingResponse = resp.data.data;
       this.status = Boolean(
         resp.data?.success &&
-          resp.data.data.vendReport[phoneNumber] === "successful"
+        resp.data.data.vendReport[phoneNumber] === "successful",
       );
       this.message = !this.status
         ? "Airtime vending failed"
@@ -789,7 +787,7 @@ export class BuyVTU {
           headers: {
             Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}`,
           },
-        }
+        },
       );
 
       this.vendingResponse = {
@@ -805,7 +803,7 @@ export class BuyVTU {
       };
       this.status = Boolean(
         status === 200 &&
-          this.vendingResponse.vendReport?.[data.phone_number] === "successful"
+        this.vendingResponse.vendReport?.[data.phone_number] === "successful",
       );
       this.message = !this.status
         ? "Airtime vending failed"
@@ -841,7 +839,7 @@ export class BuyVTU {
           headers: {
             Authorization: `Bearer ${this.accessToken}`,
           },
-        }
+        },
       );
 
       this.validateMeterResponse = resp.data.data;
@@ -878,7 +876,7 @@ export class BuyVTU {
           headers: {
             Authorization: `Bearer ${this.accessToken}`,
           },
-        }
+        },
       );
 
       this.powerVendResponse = resp.data.data;
@@ -981,7 +979,7 @@ export class BuyVTU {
     planId: number,
     phoneNumber: string,
     amount: number,
-    ref: string
+    ref: string,
   ) {
     try {
       interface IRes {
@@ -1007,10 +1005,10 @@ export class BuyVTU {
           headers: {
             Authorization: `Bearer 34a79f30767afa70514e239c5b990e68a16ba073db6a03ec2d8d6245075236df`,
           },
-        }
+        },
       );
 
-      console.log(res.data);
+      console.log("SMEPLUG Response:", JSON.stringify(res.data, null, 2));
 
       this.vendingResponse = {
         recipientCount: 1,
@@ -1026,15 +1024,25 @@ export class BuyVTU {
 
       this.status = Boolean(
         res.data.status &&
-          this.vendingResponse.vendReport[phoneNumber] === "successful"
+        this.vendingResponse.vendReport[phoneNumber] === "successful",
       );
       this.message = !this.status
         ? res.data.data.msg || "Data vending failed"
         : res.data.data.msg;
 
+      console.log(
+        "SMEPLUG Result Status:",
+        this.status,
+        "Message:",
+        this.message,
+      );
+
       return this;
     } catch (error: any) {
-      console.log(error.response);
+      console.log(
+        "SMEPLUG Error Response:",
+        error.response?.data || error.message,
+      );
       this.status = false;
       this.message =
         error instanceof Error && error.message
@@ -1048,7 +1056,7 @@ export class BuyVTU {
     network: string,
     data_plan: string,
     phoneNumber: string,
-    bypass: boolean = false
+    bypass: boolean = false,
   ) {
     try {
       const payload = {
@@ -1066,7 +1074,7 @@ export class BuyVTU {
           headers: {
             Authorization: `Token ${process.env.A4BDATA_ACCESS_TOKEN}`,
           },
-        }
+        },
       );
 
       console.log(res.data);
@@ -1086,7 +1094,7 @@ export class BuyVTU {
 
       this.status = Boolean(
         res.data.status &&
-          this.vendingResponse.vendReport[phoneNumber] === "successful"
+        this.vendingResponse.vendReport[phoneNumber] === "successful",
       );
       this.message = !this.status
         ? "Data vending failed"
@@ -1156,7 +1164,7 @@ export class BuyVTU {
 
       const res = await vtuPassApi.post<VtuPassPayResponse>("/pay", payload);
 
-      console.log(res);
+      console.log("VTUPass Response:", JSON.stringify(res.data, null, 2));
 
       this.vendingResponse = {
         recipientCount: 1,
@@ -1170,10 +1178,17 @@ export class BuyVTU {
         commissionEarned: 0,
       };
 
-      this.status = res.data.code === "000";
+      this.status = res.data.code === "000" || res.data.code === "099";
       this.message = !this.status
         ? res.data.response_description
         : `Your data purchase was successful and you will credited shortly`;
+
+      console.log(
+        "VTUPass Result Status:",
+        this.status,
+        "Message:",
+        this.message,
+      );
 
       return this;
     } catch (error: any) {
@@ -1190,7 +1205,7 @@ export class BuyVTU {
   public async createPendingTransaction(
     type: transactionType,
     userId: string,
-    options?: Record<string, any>
+    options?: Record<string, any>,
   ) {
     try {
       if (!this.session) {
@@ -1237,6 +1252,12 @@ export class BuyVTU {
         throw new Error("No transaction to update");
       }
 
+      console.log("Updating transaction status:", {
+        success,
+        message,
+        transactionId: this.transaction._id,
+      });
+
       const updateData = {
         status: success ? "success" : "failed",
         "meta.vendingResponse": this.vendingResponse,
@@ -1254,7 +1275,7 @@ export class BuyVTU {
         await addToRecentlyUsedContact(
           this.transaction.user,
           this.transaction.type,
-          { ...this.transaction.meta, network: this.network }
+          { ...this.transaction.meta, network: this.network },
         );
       }
 
@@ -1270,7 +1291,7 @@ export class BuyVTU {
   public async createTransaction(
     type: transactionType,
     userId: string,
-    options?: Record<string, any>
+    options?: Record<string, any>,
   ) {
     try {
       if (!this.session) {
@@ -1316,7 +1337,7 @@ export class BuyVTU {
         userId,
         trxPayload.type,
         { ...meta, network: this.network, reciepients: options?.phoneNumber },
-        this.session
+        this.session,
       );
 
       this.transaction = transaction;
@@ -1448,7 +1469,7 @@ export class ReferralProcessor {
       throw new Error(
         `Failed to find referral record: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     }
   }
@@ -1480,7 +1501,7 @@ export class ReferralProcessor {
       throw new Error(
         `Failed to check deposit eligibility: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     }
   }
@@ -1541,11 +1562,11 @@ export class ReferralProcessor {
         transaction.save(),
         User.updateOne(
           { _id: referrer._id },
-          { $inc: { balance: rewardAmount } }
+          { $inc: { balance: rewardAmount } },
         ),
         Referral.updateOne(
           { _id: this.referralRecord._id },
-          { rewardClaimed: true }
+          { rewardClaimed: true },
         ),
       ]);
 
@@ -1558,7 +1579,7 @@ export class ReferralProcessor {
       throw new Error(
         `Failed to credit referrer: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     }
   }
@@ -1588,7 +1609,7 @@ export const refundUser = async (txRef: string): Promise<RefundResult> => {
   // Input validation
   if (!txRef || typeof txRef !== "string" || txRef.trim().length === 0) {
     const error: RefundError = new Error(
-      "Transaction reference is required and must be a valid string"
+      "Transaction reference is required and must be a valid string",
     );
     error.code = "INVALID_INPUT";
     error.statusCode = 400;
@@ -1610,7 +1631,7 @@ export const refundUser = async (txRef: string): Promise<RefundResult> => {
 
       if (!transaction) {
         const error: RefundError = new Error(
-          `Transaction not found with reference: ${txRef}`
+          `Transaction not found with reference: ${txRef}`,
         );
         error.code = "TRANSACTION_NOT_FOUND";
         error.statusCode = 404;
@@ -1620,7 +1641,7 @@ export const refundUser = async (txRef: string): Promise<RefundResult> => {
       // Validate transaction status
       if (transaction.status === "refunded") {
         const error: RefundError = new Error(
-          `Transaction with status: ${transaction.status} has already been refunded.`
+          `Transaction with status: ${transaction.status} has already been refunded.`,
         );
         error.code = "TRANSACTON_ALREADY_REFUNDED";
         error.statusCode = 422;
@@ -1634,7 +1655,7 @@ export const refundUser = async (txRef: string): Promise<RefundResult> => {
 
       if (!user) {
         const error: RefundError = new Error(
-          `User not found with ID: ${transaction.user}`
+          `User not found with ID: ${transaction.user}`,
         );
         error.code = "USER_NOT_FOUND";
         error.statusCode = 404;
@@ -1644,7 +1665,7 @@ export const refundUser = async (txRef: string): Promise<RefundResult> => {
       // Validate refund amount
       if (!transaction.amount || transaction.amount <= 0) {
         const error: RefundError = new Error(
-          "Invalid transaction amount for refund"
+          "Invalid transaction amount for refund",
         );
         error.code = "INVALID_AMOUNT";
         error.statusCode = 422;
@@ -1666,7 +1687,7 @@ export const refundUser = async (txRef: string): Promise<RefundResult> => {
 
       // Log successful refund
       console.log(
-        `Refund processed successfully: Transaction ${transaction._id}, Amount: ${transaction.amount}, User: ${user._id}`
+        `Refund processed successfully: Transaction ${transaction._id}, Amount: ${transaction.amount}, User: ${user._id}`,
       );
 
       return {
@@ -1693,7 +1714,7 @@ export const refundUser = async (txRef: string): Promise<RefundResult> => {
 
     // Handle unexpected errors
     const unexpectedError: RefundError = new Error(
-      "An unexpected error occurred during refund processing"
+      "An unexpected error occurred during refund processing",
     );
     unexpectedError.code = "INTERNAL_ERROR";
     unexpectedError.statusCode = 500;
@@ -1701,4 +1722,77 @@ export const refundUser = async (txRef: string): Promise<RefundResult> => {
   } finally {
     await session.endSession();
   }
+};
+
+export const sendNotification = async (
+  userEmail: string,
+  subject: string,
+  message: string,
+  data: Record<string, any>,
+) => {
+  const emailTemplate = kintaSMEEmailNotification({
+    ...data,
+  });
+
+  try {
+    await sendEmail([userEmail], emailTemplate, subject);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const kintaSMEEmailNotification = ({
+  planName,
+  amount,
+  network,
+  phoneNumber,
+  transactionId,
+  vendingSuccess,
+  vendingMessage,
+}: Record<string, any>) => {
+  return `
+  <div style="font-family: Arial, sans-serif; background:#f5f7fb; padding:20px;">
+    <div style="max-width:600px; margin:auto; background:#ffffff; border-radius:10px; padding:24px;">
+      
+      <h2 style="color:#0f172a; margin-bottom:8px;">
+        kintaSME Notification
+      </h2>
+
+      <p style="color:#475569;">
+        Your transaction update is below:
+      </p>
+
+      <div style="margin:20px 0; padding:16px; background:#f1f5f9; border-radius:8px;">
+        
+        <p><strong>Status:</strong> ${
+          vendingSuccess
+            ? '<span style="color:green;">Successful ✅</span>'
+            : '<span style="color:red;">Failed ❌</span>'
+        }</p>
+
+        <p><strong>Service:</strong> ${planName}</p>
+        <p><strong>Network:</strong> ${network}</p>
+        <p><strong>Amount:</strong> ₦${amount}</p>
+        <p><strong>Phone Number:</strong> ${phoneNumber}</p>
+        <p><strong>Transaction ID:</strong> ${transactionId}</p>
+      </div>
+
+      <p style="color:#334155;">
+        ${vendingMessage || ""}
+      </p>
+
+      <hr style="margin:24px 0;" />
+
+      <p style="font-size:12px; color:#64748b;">
+        Thank you for using <strong>kintaSME</strong> — your trusted platform 
+        for data, airtime, and bill payments.
+      </p>
+
+      <p style="font-size:12px; color:#94a3b8;">
+        This is an automated message. Please do not reply.
+      </p>
+
+    </div>
+  </div>
+  `;
 };

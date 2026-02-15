@@ -1,5 +1,6 @@
 import { httpStatusResponse } from "@/lib/utils";
 import { Transaction } from "@/models/transactions";
+import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -7,7 +8,6 @@ export async function GET(request: NextRequest) {
     const q = request.nextUrl.searchParams;
     const tx_ref = q.get("tx_ref");
     const useExpirationDate = q.get("useExpirationDate") || true;
-    const status = q.get("status");
 
     let query: Record<string, any> = {};
 
@@ -15,14 +15,18 @@ export async function GET(request: NextRequest) {
       query["meta.expirationTime"] = { $gte: new Date().toISOString() };
     }
 
-    if (status) {
-      query["status"] = status;
-    }
-
     const transaction = await Transaction.findOne({
-      $or: [{ tx_ref }, { "meta.transactionRef": tx_ref }],
-      ...query,
+      $or: [
+        { tx_ref },
+        { "meta.transactionRef": tx_ref },
+        ...(mongoose.isValidObjectId(tx_ref)
+          ? [{ _id: new mongoose.Types.ObjectId(tx_ref!) }]
+          : []),
+      ],
+      //...query,
     });
+
+    console.log(transaction);
 
     return NextResponse.json(httpStatusResponse(200, "Success", transaction), {
       status: 200,
@@ -30,7 +34,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       httpStatusResponse(500, (error as Error).message),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

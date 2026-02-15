@@ -53,10 +53,10 @@ export default function DataPlanCard({
       }>(`/purchase/data/`, payload);
 
       setNotification(true, {
-        title: "Data Purchase successful",
+        title: "Data Purchase Pending",
         description: res.data.message,
         tx_ref: res.data.data.transactionRef,
-        type: "success",
+        type: "pending",
       });
     } catch (error) {
       setNotification(true, {

@@ -20,7 +20,7 @@ const AccountSchema: mongoose.Schema<dedicatedAccountNumber> =
       hasDedicatedAccountNumber: { type: Boolean, default: false }, // Fixed type definition
       order_ref: { type: String, required: true },
     },
-    { timestamps: true }
+    { timestamps: true },
   );
 
 // Hash BVN before saving
@@ -30,6 +30,6 @@ AccountSchema.pre("save", async function (next) {});
 AccountSchema.post("save", async (doc, next) => {});
 
 const Account: mongoose.Model<dedicatedAccountNumber> =
-  mongoose.models.Account || mongoose.model("Account", AccountSchema);
+  mongoose?.models?.Account || mongoose?.model("Account", AccountSchema);
 
 export { Account };
